@@ -2,77 +2,77 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Test de Conexión WISPHUB - FiberFast</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiberFast - Debugger API</title>
+    <!-- Cargamos Axios para que sea igual a tu código de React Native -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        body { background: #050a14; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
-        input { padding: 10px; width: 250px; border-radius: 5px; border: none; }
-        button { padding: 10px 20px; background: #00AEEF; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        #log { margin-top: 20px; background: #1a1a1a; padding: 20px; text-align: left; display: inline-block; border: 1px solid #333; }
-        .error { color: #ff5252; }
-        .success { color: #4caf50; }
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #333; }
+        input { padding: 10px; width: 250px; border-radius: 4px; border: 1px solid #444; background: #222; color: white; }
+        button { padding: 10px 20px; background: #00a8ff; border: none; color: white; border-radius: 4px; cursor: pointer; }
+        pre { background: #000; padding: 15px; border-radius: 5px; overflow-x: auto; color: #0f0; border: 1px solid #222; }
+        .status { font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <img src="https://www.fiberfast.com.co/logo.png" width="200"><br><br>
-    <h2>Prueba de Validación API WISPHUB</h2>
-    
-    <input type="text" id="cedula" placeholder="Cédula del cliente">
-    <button onclick="testConexion()">PROBAR API</button>
+    <h2>🛠️ Debugger Directo de WispHub</h2>
+    <p>Probando endpoint: <code>https://api.wisphub.net/api/clientes/{id}/</code></p>
 
-    <div id="log">
-        <p>Resultados aparecerán aquí...</p>
+    <div class="card">
+        <input type="text" id="idServicio" placeholder="Ingresa ID de Servicio (ej: 452)">
+        <button onclick="probarEndpoint()">CONSULTAR ESTADO</button>
+        
+        <div id="status" class="status"></div>
+        <h4>Respuesta de la API (Consola):</h4>
+        <pre id="output">Los resultados aparecerán aquí...</pre>
     </div>
 
     <script>
-        async function testConexion() {
-            const cedula = document.getElementById('cedula').value;
-            const logDiv = document.getElementById('log');
-            const API_KEY = 'TU_API_KEY_AQUI'; // <--- PEGA TU LLAVE AQUÍ
-            const URL = `https://sandbox-api.wisphub.app/clientes/?cedula_dni=${cedula}`;
+        // CONFIGURACIÓN
+        const API_KEY = 'TU_API_KEY_AQUI'; // <--- PEGA TU LLAVE AQUÍ
+        const PROXY = 'https://cors-anywhere.herokuapp.com/';
 
-            logDiv.innerHTML = "Iniciando petición...";
+        async function probarEndpoint() {
+            const id = document.getElementById('idServicio').value;
+            const output = document.getElementById('output');
+            const statusDiv = document.getElementById('status');
+
+            if(!id) return alert("Ingresa un ID");
+
+            output.innerText = "Consultando...";
+            statusDiv.innerText = "";
 
             try {
-                const response = await fetch(URL, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Api-Key ${API_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
+                // Construimos la URL tal cual la definiste
+                const URL_FINAL = `${PROXY}https://api.wisphub.net/api/clientes/${id}/`;
+                
+                const response = await axios.get(URL_FINAL, {
+                    headers: { 'Authorization': `Api-Key ${API_KEY}` }
                 });
 
-                const status = response.status;
-                const data = await response.json();
+                // --- AQUÍ SE IMPRIME LO QUE QUERÍAS VER ---
+                console.log("----------------------------");
+                console.log("RESULTADO PARA ID:", id);
+                console.log("ESTADO:", response.data.estado);
+                console.log("JSON COMPLETO:", response.data);
+                console.log("----------------------------");
 
-                console.log("Status Code:", status);
-                console.log("Data:", data);
-
-                if (status === 200) {
-                    if (data.results && data.results.length > 0) {
-                        const cliente = data.results[0];
-                        logDiv.innerHTML = `
-                            <p class="success">✅ CONEXIÓN EXITOSA</p>
-                            <p><b>Cliente:</b> ${cliente.nombre}</p>
-                            <p><b>Estado:</b> ${cliente.estado}</p>
-                            <p><b>Servicio:</b> ${cliente.plan_internet}</p>
-                        `;
-                    } else {
-                        logDiv.innerHTML = `<p class="error">❌ No se encontró cliente con esa cédula.</p>`;
-                    }
-                } else {
-                    logDiv.innerHTML = `<p class="error">❌ Error del Servidor: ${status}</p>
-                                       <pre>${JSON.stringify(data, null, 2)}</pre>`;
-                }
+                // Mostrar en pantalla
+                output.innerText = JSON.stringify(response.data, null, 2);
+                statusDiv.style.color = response.data.estado === 'Activo' ? '#0f0' : '#f00';
+                statusDiv.innerText = "ESTADO: " + response.data.estado;
 
             } catch (error) {
-                logDiv.innerHTML = `
-                    <p class="error">❌ ERROR DE RED / CORS</p>
-                    <p>Detalle: ${error.message}</p>
-                    <p><i>Nota: Si estás en Chrome, el CORS podría bloquear esto. 
-                    Prueba abriendo la consola (F12) para ver más detalles.</i></p>
-                `;
-                console.error("Error completo:", error);
+                console.error("Fallo en la consulta:", error);
+                output.innerText = "Error: " + (error.response?.status || error.message);
+                statusDiv.style.color = "red";
+                statusDiv.innerText = "ERROR: Verifica el ID o la API Key";
+                
+                if(error.message.includes('CORS')) {
+                    alert("Recuerda activar el acceso en: https://cors-anywhere.herokuapp.com/corsdemo");
+                }
             }
         }
     </script>
