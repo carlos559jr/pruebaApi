@@ -46,7 +46,7 @@
 
             try {
                 // Construimos la URL tal cual la definiste
-                const URL_FINAL = `${PROXY}https://api.wisphub.net/api/clientes/${id}/`;
+                const URL_FINAL = `${PROXY}https://api.wisphub.app/api/clientes/${id}/`;
                 
                 const response = await axios.get(URL_FINAL, {
                     headers: { 'Authorization': `Api-Key ${API_KEY}` }
