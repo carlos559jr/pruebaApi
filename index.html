@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test de Conexión WISPHUB - FiberFast</title>
+    <style>
+        body { background: #050a14; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
+        input { padding: 10px; width: 250px; border-radius: 5px; border: none; }
+        button { padding: 10px 20px; background: #00AEEF; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        #log { margin-top: 20px; background: #1a1a1a; padding: 20px; text-align: left; display: inline-block; border: 1px solid #333; }
+        .error { color: #ff5252; }
+        .success { color: #4caf50; }
+    </style>
+</head>
+<body>
+
+    <img src="https://www.fiberfast.com.co/logo.png" width="200"><br><br>
+    <h2>Prueba de Validación API WISPHUB</h2>
+    
+    <input type="text" id="cedula" placeholder="Cédula del cliente">
+    <button onclick="testConexion()">PROBAR API</button>
+
+    <div id="log">
+        <p>Resultados aparecerán aquí...</p>
+    </div>
+
+    <script>
+        async function testConexion() {
+            const cedula = document.getElementById('cedula').value;
+            const logDiv = document.getElementById('log');
+            const API_KEY = 'TU_API_KEY_AQUI'; // <--- PEGA TU LLAVE AQUÍ
+            const URL = `https://sandbox-api.wisphub.app/clientes/?cedula_dni=${cedula}`;
+
+            logDiv.innerHTML = "Iniciando petición...";
+
+            try {
+                const response = await fetch(URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Api-Key ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const status = response.status;
+                const data = await response.json();
+
+                console.log("Status Code:", status);
+                console.log("Data:", data);
+
+                if (status === 200) {
+                    if (data.results && data.results.length > 0) {
+                        const cliente = data.results[0];
+                        logDiv.innerHTML = `
+                            <p class="success">✅ CONEXIÓN EXITOSA</p>
+                            <p><b>Cliente:</b> ${cliente.nombre}</p>
+                            <p><b>Estado:</b> ${cliente.estado}</p>
+                            <p><b>Servicio:</b> ${cliente.plan_internet}</p>
+                        `;
+                    } else {
+                        logDiv.innerHTML = `<p class="error">❌ No se encontró cliente con esa cédula.</p>`;
+                    }
+                } else {
+                    logDiv.innerHTML = `<p class="error">❌ Error del Servidor: ${status}</p>
+                                       <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+
+            } catch (error) {
+                logDiv.innerHTML = `
+                    <p class="error">❌ ERROR DE RED / CORS</p>
+                    <p>Detalle: ${error.message}</p>
+                    <p><i>Nota: Si estás en Chrome, el CORS podría bloquear esto. 
+                    Prueba abriendo la consola (F12) para ver más detalles.</i></p>
+                `;
+                console.error("Error completo:", error);
+            }
+        }
+    </script>
+</body>
+</html>
