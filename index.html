@@ -71,48 +71,33 @@
     output.innerText = "⏳ Iniciando petición...";
     badge.innerHTML = '';
 
-    try {
-        console.log("Intentando conectar a:", FULL_URL);
-        
-        const res = await fetch(FULL_URL, {
-            method: 'GET',
-            mode: 'cors', // Forzamos modo CORS
-            headers: {
-                'Authorization': `Api-Key ${token}`,
-                'Accept': 'application/json'
-            }
-        });
+   try {
+    const res = await fetch(FULL_URL, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Api-Key ${token}`,
+            'Accept': 'application/json'
+        }
+    });
 
+    // VERIFICACIÓN DE TIPO DE CONTENIDO
+    const contentType = res.headers.get("content-type");
+    
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        // Si es JSON, procedemos normal
         const data = await res.json();
-        
         badge.innerHTML = `<span class="badge status-ok">HTTP ${res.status}</span>`;
         output.innerText = JSON.stringify(data, null, 4);
-        output.style.color = "#7ee787";
-
-    } catch (err) {
-        // --- DIAGNÓSTICO DETALLADO ---
-        badge.innerHTML = `<span class="badge status-error">FALLO DETECTADO</span>`;
+    } else {
+        // SI NO ES JSON, leemos el texto para saber qué es (probablemente HTML)
+        const textoError = await res.text();
+        badge.innerHTML = `<span class="badge status-error">RESPUESTA NO-JSON</span>`;
+        output.innerText = "EL SERVIDOR DEVOLVIÓ HTML (Posible error de URL o Proxy):\n\n" + textoError.substring(0, 500); // Mostramos los primeros 500 caracteres
         output.style.color = "#ff7b72";
-        
-        let mensajeExtra = "";
-        
-        if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
-            mensajeExtra = `
-⚠️ POSIBLE ERROR DE CORS:
-El servidor de WispHub no permite peticiones directas desde tu dominio de Netlify. 
-
-SOLUCIONES:
-1. Usa un Proxy (como el de Heroku) para saltar el bloqueo.
-2. Revisa la Consola (Presiona F12 > pestaña Console) para ver el mensaje rojo de CORS.
-3. Verifica que la URL "${FULL_URL}" sea correcta.`;
-        } else {
-            mensajeExtra = `DETALLE TÉCNICO: ${err.message}`;
-        }
-
-        output.innerText = `ERROR CRÍTICO:\n${err}\n${mensajeExtra}`;
-        
-        console.error("Error completo para inspección:", err);
     }
+
+} catch (err) {
+    output.innerText = "FALLO DE CONEXIÓN:\n" + err.message;
 }
 </script>
 
