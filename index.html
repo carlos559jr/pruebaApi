@@ -36,7 +36,7 @@
         </div>
         <div class="input-row">
             <div class="field" style="flex: 2;">
-                <label>Endpoint (Base: https://api.wisphub.net/api)</label>
+                <label>Endpoint (Base: https://api.wisphub.app/api)</label>
                 <input type="text" id="endpoint" value="/clientes/ID_AQUI/" placeholder="/clientes/452/">
             </div>
             <div class="field" style="flex: 1; align-self: flex-end;">
@@ -61,7 +61,7 @@
         const output = document.getElementById('json-output');
         const badge = document.getElementById('status-badge');
         
-        const BASE_URL = "https://api.wisphub.net/api";
+        const BASE_URL = "https://api.wisphub.app/api";
         const FULL_URL = BASE_URL + endpoint;
 
         if(!token) return alert("Falta la API Key");
