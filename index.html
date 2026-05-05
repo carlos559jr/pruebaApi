@@ -2,79 +2,100 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FiberFast - Debugger API</title>
-    <!-- Cargamos Axios para que sea igual a tu código de React Native -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>FiberFast | WispHub API Tester</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #333; }
-        input { padding: 10px; width: 250px; border-radius: 4px; border: 1px solid #444; background: #222; color: white; }
-        button { padding: 10px 20px; background: #00a8ff; border: none; color: white; border-radius: 4px; cursor: pointer; }
-        pre { background: #000; padding: 15px; border-radius: 5px; overflow-x: auto; color: #0f0; border: 1px solid #222; }
-        .status { font-weight: bold; margin-top: 10px; }
+        :root { --primary: #00d2ff; --bg: #0a0e14; --panel: #161b22; --text: #c9d1d9; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .wrapper { max-width: 1000px; margin: auto; }
+        .config-panel { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 20px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .field { flex: 1; min-width: 300px; }
+        label { display: block; font-size: 12px; color: var(--primary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 6px; box-sizing: border-box; font-family: monospace; }
+        button { background: var(--primary); color: #000; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
+        .response-area { background: #000; border: 1px solid #30363d; border-radius: 8px; padding: 0; position: relative; min-height: 400px; }
+        .response-header { background: #161b22; padding: 10px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+        #json-output { margin: 0; padding: 20px; color: #7ee787; font-family: 'Cascadia Code', monospace; font-size: 14px; overflow-x: auto; white-space: pre-wrap; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status-ok { background: #238636; color: white; }
+        .status-error { background: #da3633; color: white; }
     </style>
 </head>
 <body>
 
-    <h2>🛠️ Debugger Directo de WispHub</h2>
-    <p>Probando endpoint: <code>https://api.wisphub.app/api/clientes/{id}/</code></p>
-
-    <div class="card">
-        <input type="text" id="idServicio" placeholder="Ingresa ID de Servicio (ej: 452)">
-        <button onclick="probarEndpoint()">CONSULTAR ESTADO</button>
-        
-        <div id="status" class="status"></div>
-        <h4>Respuesta de la API (Consola):</h4>
-        <pre id="output">Los resultados aparecerán aquí...</pre>
+<div class="wrapper">
+    <h2>🚀 FiberFast - Debugger de Red</h2>
+    
+    <div class="config-panel">
+        <div class="input-row">
+            <div class="field">
+                <label>Tu WispHub Api-Key</label>
+                <input type="text" id="token" placeholder="Ej: 52f5...3f">
+            </div>
+        </div>
+        <div class="input-row">
+            <div class="field" style="flex: 2;">
+                <label>Endpoint (Base: https://api.wisphub.net/api)</label>
+                <input type="text" id="endpoint" value="/clientes/ID_AQUI/" placeholder="/clientes/452/">
+            </div>
+            <div class="field" style="flex: 1; align-self: flex-end;">
+                <button onclick="ejecutarTest()">DISPARAR PETICIÓN</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // CONFIGURACIÓN
-        const API_KEY = 'LV4cqkWk.Q75LCb5TdjjavsjU4Kth0Nqem20Ki27c'; // <--- PEGA TU LLAVE AQUÍ
-        const PROXY = 'https://cors-anywhere.herokuapp.com/';
+    <div class="response-area">
+        <div class="response-header">
+            <span>RESULTADO JSON</span>
+            <div id="status-badge"></div>
+        </div>
+        <pre id="json-output">Dale a "Disparar Petición" para ver la respuesta del servidor...</pre>
+    </div>
+</div>
 
-        async function probarEndpoint() {
-            const id = document.getElementById('idServicio').value;
-            const output = document.getElementById('output');
-            const statusDiv = document.getElementById('status');
+<script>
+    async function ejecutarTest() {
+        const token = document.getElementById('token').value;
+        const endpoint = document.getElementById('endpoint').value;
+        const output = document.getElementById('json-output');
+        const badge = document.getElementById('status-badge');
+        
+        const BASE_URL = "https://api.wisphub.net/api";
+        const FULL_URL = BASE_URL + endpoint;
 
-            if(!id) return alert("Ingresa un ID");
+        if(!token) return alert("Falta la API Key");
 
-            output.innerText = "Consultando...";
-            statusDiv.innerText = "";
+        output.innerText = "Conectando con el servidor de WispHub...";
+        badge.innerHTML = '';
 
-            try {
-                // Construimos la URL tal cual la definiste
-                const URL_FINAL = `${PROXY}https://api.wisphub.app/api/clientes/${id}/`;
-                
-                const response = await axios.get(URL_FINAL, {
-                    headers: { 'Authorization': `Api-Key ${API_KEY}` }
-                });
-
-                // --- AQUÍ SE IMPRIME LO QUE QUERÍAS VER ---
-                console.log("----------------------------");
-                console.log("RESULTADO PARA ID:", id);
-                console.log("ESTADO:", response.data.estado);
-                console.log("JSON COMPLETO:", response.data);
-                console.log("----------------------------");
-
-                // Mostrar en pantalla
-                output.innerText = JSON.stringify(response.data, null, 2);
-                statusDiv.style.color = response.data.estado === 'Activo' ? '#0f0' : '#f00';
-                statusDiv.innerText = "ESTADO: " + response.data.estado;
-
-            } catch (error) {
-                console.error("Fallo en la consulta:", error);
-                output.innerText = "Error: " + (error.response?.status || error.message);
-                statusDiv.style.color = "red";
-                statusDiv.innerText = "ERROR: Verifica el ID o la API Key";
-                
-                if(error.message.includes('CORS')) {
-                    alert("Recuerda activar el acceso en: https://cors-anywhere.herokuapp.com/corsdemo");
+        try {
+            const res = await fetch(FULL_URL, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Api-Key ${token}`,
+                    'Accept': 'application/json'
                 }
-            }
+            });
+
+            const data = await res.json();
+            
+            // Mostrar Status Badge
+            badge.innerHTML = `<span class="badge ${res.ok ? 'status-ok' : 'status-error'}">HTTP ${res.status}</span>`;
+            
+            // Imprimir JSON Formateado
+            output.innerText = JSON.stringify(data, null, 4);
+            output.style.color = res.ok ? "#7ee787" : "#ffa198";
+
+        } catch (err) {
+            badge.innerHTML = `<span class="badge status-error">FALLO DE RED</span>`;
+            output.innerText = "ERROR CRÍTICO:\n" + err.message;
+            output.style.color = "#ff7b72";
+            
+            console.error("Detalle del error:", err);
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
