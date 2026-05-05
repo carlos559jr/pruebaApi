@@ -56,45 +56,62 @@
 
 <script>
     async function ejecutarTest() {
-        const token = document.getElementById('token').value;
-        const endpoint = document.getElementById('endpoint').value;
-        const output = document.getElementById('json-output');
-        const badge = document.getElementById('status-badge');
+    const token = document.getElementById('token').value;
+    const endpoint = document.getElementById('endpoint').value;
+    const output = document.getElementById('json-output');
+    const badge = document.getElementById('status-badge');
+    
+    const BASE_URL = "https://api.wisphub.net/api";
+    const FULL_URL = BASE_URL + endpoint;
+
+    if(!token) return alert("Falta la API Key");
+
+    output.innerText = "⏳ Iniciando petición...";
+    badge.innerHTML = '';
+
+    try {
+        console.log("Intentando conectar a:", FULL_URL);
         
-        const BASE_URL = "https://api.wisphub.app/api";
-        const FULL_URL = BASE_URL + endpoint;
+        const res = await fetch(FULL_URL, {
+            method: 'GET',
+            mode: 'cors', // Forzamos modo CORS
+            headers: {
+                'Authorization': `Api-Key ${token}`,
+                'Accept': 'application/json'
+            }
+        });
 
-        if(!token) return alert("Falta la API Key");
+        const data = await res.json();
+        
+        badge.innerHTML = `<span class="badge status-ok">HTTP ${res.status}</span>`;
+        output.innerText = JSON.stringify(data, null, 4);
+        output.style.color = "#7ee787";
 
-        output.innerText = "Conectando con el servidor de WispHub...";
-        badge.innerHTML = '';
+    } catch (err) {
+        // --- DIAGNÓSTICO DETALLADO ---
+        badge.innerHTML = `<span class="badge status-error">FALLO DETECTADO</span>`;
+        output.style.color = "#ff7b72";
+        
+        let mensajeExtra = "";
+        
+        if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+            mensajeExtra = `
+⚠️ POSIBLE ERROR DE CORS:
+El servidor de WispHub no permite peticiones directas desde tu dominio de Netlify. 
 
-        try {
-            const res = await fetch(FULL_URL, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Api-Key ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            const data = await res.json();
-            
-            // Mostrar Status Badge
-            badge.innerHTML = `<span class="badge ${res.ok ? 'status-ok' : 'status-error'}">HTTP ${res.status}</span>`;
-            
-            // Imprimir JSON Formateado
-            output.innerText = JSON.stringify(data, null, 4);
-            output.style.color = res.ok ? "#7ee787" : "#ffa198";
-
-        } catch (err) {
-            badge.innerHTML = `<span class="badge status-error">FALLO DE RED</span>`;
-            output.innerText = "ERROR CRÍTICO:\n" + err.message;
-            output.style.color = "#ff7b72";
-            
-            console.error("Detalle del error:", err);
+SOLUCIONES:
+1. Usa un Proxy (como el de Heroku) para saltar el bloqueo.
+2. Revisa la Consola (Presiona F12 > pestaña Console) para ver el mensaje rojo de CORS.
+3. Verifica que la URL "${FULL_URL}" sea correcta.`;
+        } else {
+            mensajeExtra = `DETALLE TÉCNICO: ${err.message}`;
         }
+
+        output.innerText = `ERROR CRÍTICO:\n${err}\n${mensajeExtra}`;
+        
+        console.error("Error completo para inspección:", err);
     }
+}
 </script>
 
 </body>
