@@ -61,8 +61,10 @@
     const output = document.getElementById('json-output');
     const badge = document.getElementById('status-badge');
     
+    // Agregamos este prefijo para saltar el bloqueo de CORS
+    const PROXY = "https://cors-anywhere.herokuapp.com/";
     const BASE_URL = "https://api.wisphub.app/api";
-    const FULL_URL = BASE_URL + endpoint;
+    const FULL_URL = PROXY + BASE_URL + endpoint;
 
     if(!token) return alert("Falta la API Key");
 
